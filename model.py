@@ -3,7 +3,9 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib.ticker as plticker
+from matplotlib.animation import FuncAnimation
 import csv
+import os
 
 
 def getArraysFromCSV(pathToCSV):
@@ -23,6 +25,7 @@ def getArraysFromCSV(pathToCSV):
     return points, labels
 
 def configurePlot():
+    plt.ion()
     fig = plt.figure()
     plt.subplots_adjust(left=0.001,
                         bottom=0.001, 
@@ -41,15 +44,19 @@ def configurePlot():
     return fig, ax
 
 def plotPoints(points, ax):
+    scatterList = []
+    quiverList = []
     for point in points:
         if (len(point) == 3):
-            ax.scatter(point[0], point[1], point[2])
+            scatterList.append(ax.scatter(point[0], point[1], point[2], color='orange'))
         else:
-            ax.quiver(point[0], point[1], point[2], point[3], point[4], point[5], length=.2)
+            quiverList.append(ax.quiver(point[0], point[1], point[2], point[3], point[4], point[5], length=.2))
+    return scatterList, quiverList
     
 def annotatePoints(points, labels):
     # global labels_and_points
-    labels_and_points = []
+    # labels_and_points = []
+    labelsList = []
 
     for txt, pointData in zip(labels, points):
         x2, y2, _ = proj3d.proj_transform(pointData[0],pointData[1],pointData[2], ax.get_proj())
@@ -58,9 +65,11 @@ def annotatePoints(points, labels):
             textcoords = 'offset points', ha = 'right', va = 'bottom',
             bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
             arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=.1'))
-        labels_and_points.append((label, pointData))
+        # labels_and_points.append((label, pointData))
+        labelsList.append(label)
 
-    return labels_and_points
+    # return labels_and_points, labelsList
+    return labelsList
 
 def update_position(e, labels_and_points, fig):
     for label, pointData in labels_and_points:
@@ -69,12 +78,36 @@ def update_position(e, labels_and_points, fig):
         label.update_positions(fig.canvas.renderer)
     fig.canvas.draw()
 
-
 if __name__ == '__main__':
     fig, ax = configurePlot()
-    points, labels = getArraysFromCSV('config.csv')
-    plotPoints(points, ax)
-    labels_and_points = annotatePoints(points, labels)
 
-    fig.canvas.mpl_connect('motion_notify_event', lambda event: update_position(event, labels_and_points, fig))
-    plt.show()
+    fig.canvas.draw()
+    # fig.canvas.blit()
+    fig.canvas.flush_events()
+
+    while True:
+        try:
+            points, labels = getArraysFromCSV('config.csv')
+            scatterL, quiverL = plotPoints(points, ax)
+            labelsList = annotatePoints(points, labels)
+
+            # fig.canvas.mpl_connect('motion_notify_event', lambda event: update_position(event, labels_and_points, fig))
+            # anim = FuncAnimation(fig, runEverything, 
+            # interval=200)
+
+            plt.pause(0.1)
+            # fig.canvas.blit()
+            [scatter.remove() for scatter in scatterL]
+            [quiver.remove() for quiver in quiverL]
+            # [label[0].remove() for label in labels_and_points]
+            [label.remove() for label in labelsList]
+            # fig.canvas.flush_events()
+            # fig.canvas.blit()
+
+            # plt.clf()
+        except KeyboardInterrupt:
+            try:
+                exit(0)
+            except:
+                os._exit(0)
+        # plt.show()
