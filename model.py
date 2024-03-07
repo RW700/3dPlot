@@ -48,7 +48,7 @@ def plotPoints(points, ax):
     quiverList = []
     for point in points:
         if (len(point) == 3):
-            scatterList.append(ax.scatter(point[0], point[1], point[2], color='orange'))
+            scatterList.append(ax.scatter(point[0], point[1], point[2], color='m'))
         else:
             quiverList.append(ax.quiver(point[0], point[1], point[2], point[3], point[4], point[5], length=.2))
     return scatterList, quiverList
